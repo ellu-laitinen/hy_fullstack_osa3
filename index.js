@@ -1,3 +1,4 @@
+require('dotenv').config()
 const express = require('express')
 const app = express()
 const cors = require('cors')
@@ -8,6 +9,7 @@ app.use(express.static('dist'))
 app.use(morgan('tiny'))
 app.use(cors())
 
+const Person = require('./models/person')
 
 const requestLogger = (request, response, next) => {
     console.log('Method:', request.method)
@@ -26,7 +28,7 @@ morgan.token('type', function (req, res) {
 
 
 
-let persons = [
+/* let persons = [
     {
       id: 1,
       name: "sydney fox",
@@ -48,30 +50,37 @@ let persons = [
         number: "551315"
       }
 
-  ]
+  ] */
 
 
 
   //get all
   app.get('/api/persons', (request, response) => {
-    response.json(persons)
+    Person.find({}).then(persons => {
+      response.json(persons)
+   })
 
   })
 //infopage
   app.get('/api/persons/info', (request, response) => {
-    response.send(`<p>Phonebook has info for ${persons.length} people</p>
-   <p>${new Date()}</> `)
+    Person.find({}).then(persons => {
+      response.json(persons)
+      response.send(`<p>Phonebook has info for ${persons.length} people</p>
+      <p>${new Date()}</> `)
+   })
+    
   })
 
   // get one
   app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const person = persons.find(person => person.id === id)
-    if (person) {
-      response.json(person)
-    } else {
-      response.status(404).end()
-    }
+    Person.findById(request.params.id).then(person => {
+      if (person) {
+        response.json(person)
+      } else {
+        response.status(404).end()
+      }
+    })
+ 
   })
 
   //remove person
@@ -96,23 +105,42 @@ let persons = [
     if (!body.name || !body.number) {
       return response.status(400).json({ 
         error: 'number or name is missing' 
-      })
-    } 
-    if(persons.some(person => person.name === body.name)){
+      }).end()
+    } else  {
+      Person.find({}).then(persons => {
+      /*   response.json(persons) */
+        console.log("PERSONS: "+persons)
+        if(persons.some(person => person.name === body.name)){
+
+          response.status(400).json({error:"name not unique"}).end()
+      } else {
+        console.log("construction person")
+        const person = new Person({
+          name: body.name,
+          number: body.number,
+          id: generateId(),
+        })
+        person.save().then(savedPerson => {
+          console.log("saving person")
+          response.json(savedPerson)
+          })
+
+      }
+        
+     })
+ 
+
+     
+    
+
+    }
+/*     if(persons.some(person => person.name === body.name)){
         return response.status(400).json({ 
             error: 'name must be unique' 
           })
-    }
+    } */
   
-    const person = {
-      name: body.name,
-      number: body.number,
-      id: generateId(),
-    }
-  
-    persons = persons.concat(person)
-  
-    response.json(person)
+    
   })
 
   const unknownEndpoint = (request, response) => {
