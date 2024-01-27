@@ -64,7 +64,7 @@ morgan.token('type', function (req, res) {
 //infopage
   app.get('/api/persons/info', (request, response) => {
     Person.find({}).then(persons => {
-      response.json(persons)
+     
       response.send(`<p>Phonebook has info for ${persons.length} people</p>
       <p>${new Date()}</> `)
    })
@@ -84,20 +84,15 @@ morgan.token('type', function (req, res) {
   })
 
   //remove person
-  app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    persons = persons.filter(person => person.id !== id)
-  
-    response.status(204).end()
+  app.delete('/api/persons/:id', (request, response, next) => {
+    Person.findByIdAndDelete(request.params.id)
+    .then(result => {
+      response.status(204).end()
+    })
+    .catch(error => next(error))
   })
 
   //add person
-  const generateId = () => {
-    id = Math.ceil(Math.random()*1000);
-
-   return id
-  }
-  
   app.post('/api/persons', (request, response) => {
     const body = request.body
 
@@ -118,29 +113,30 @@ morgan.token('type', function (req, res) {
         const person = new Person({
           name: body.name,
           number: body.number,
-          id: generateId(),
+      
         })
         person.save().then(savedPerson => {
           console.log("saving person")
           response.json(savedPerson)
           })
-
-      }
-        
+      }      
      })
- 
+    }    
+  })
 
-     
-    
-
-    }
-/*     if(persons.some(person => person.name === body.name)){
-        return response.status(400).json({ 
-            error: 'name must be unique' 
-          })
-    } */
+  app.put('/api/persons/:id', (request, response, next) => {
+    const body = request.body
   
-    
+    const person = {
+      name: body.name,
+      number: body.number,
+    }
+  
+    Person.findByIdAndUpdate(request.params.id, person, { new: true })
+      .then(updatedPerson => {
+        response.json(updatedPerson)
+      })
+      .catch(error => next(error))
   })
 
   const unknownEndpoint = (request, response) => {
@@ -148,6 +144,18 @@ morgan.token('type', function (req, res) {
   }
   
   app.use(unknownEndpoint)
+
+  const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+  
+    if (error.name === 'CastError') {
+      return response.status(400).send({ error: 'malformatted id' })
+    }
+  
+    next(error)
+  }
+  
+    app.use(errorHandler)
 
 
 
