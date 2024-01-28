@@ -32,7 +32,7 @@ if (process.argv[3]){
 })
 } else {
     Person.find({}).then(result => {
-        console.log("Phinebook:")
+        console.log("Phonebook:")
     result.forEach(person => {
       console.log(`${person.name} ${person.number}`)
     })

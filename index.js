@@ -53,14 +53,13 @@ morgan.token('type', function (req, res) {
   ] */
 
 
-
   //get all
   app.get('/api/persons', (request, response) => {
     Person.find({}).then(persons => {
       response.json(persons)
    })
-
   })
+
 //infopage
   app.get('/api/persons/info', (request, response) => {
     Person.find({}).then(persons => {
@@ -68,7 +67,6 @@ morgan.token('type', function (req, res) {
       response.send(`<p>Phonebook has info for ${persons.length} people</p>
       <p>${new Date()}</> `)
    })
-    
   })
 
   // get one
@@ -93,22 +91,20 @@ morgan.token('type', function (req, res) {
   })
 
   //add person
-  app.post('/api/persons', (request, response) => {
+  app.post('/api/persons', (request, response, next) => {
     const body = request.body
-
-  
     if (!body.name || !body.number) {
       return response.status(400).json({ 
         error: 'number or name is missing' 
       }).end()
     } else  {
-      Person.find({}).then(persons => {
+    /*   Person.find({}).then(persons => { */
       /*   response.json(persons) */
-        console.log("PERSONS: "+persons)
+ /*        console.log("PERSONS: "+persons)
         if(persons.some(person => person.name === body.name)){
 
           response.status(400).json({error:"name not unique"}).end()
-      } else {
+      } else { */
         console.log("construction person")
         const person = new Person({
           name: body.name,
@@ -119,20 +115,26 @@ morgan.token('type', function (req, res) {
           console.log("saving person")
           response.json(savedPerson)
           })
+          .catch(error => next(error))
       }      
-     })
+/*      }) */
     }    
-  })
+ /*  } */)
 
+  // update person
   app.put('/api/persons/:id', (request, response, next) => {
-    const body = request.body
+    const {name, number} = request.body
   
-    const person = {
+ /*    const person = {
       name: body.name,
       number: body.number,
     }
-  
-    Person.findByIdAndUpdate(request.params.id, person, { new: true })
+   */
+    Person.findByIdAndUpdate(
+      request.params.id, 
+      {name, number},
+      { new: true, runValidators: true, context: 'query' }
+       )
       .then(updatedPerson => {
         response.json(updatedPerson)
       })
@@ -150,6 +152,8 @@ morgan.token('type', function (req, res) {
   
     if (error.name === 'CastError') {
       return response.status(400).send({ error: 'malformatted id' })
+    } else if (error.name === 'ValidationError') {
+      return response.status(400).json({ error: error.message })
     }
   
     next(error)
