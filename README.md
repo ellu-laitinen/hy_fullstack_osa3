@@ -1,3 +1,3 @@
 "# hy_fullstack_osa3" 
 
-https://phonebook-app-tguy.onrender.com/api/persons
+https://phonebook-app-tguy.onrender.com/
