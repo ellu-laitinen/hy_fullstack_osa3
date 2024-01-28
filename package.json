@@ -8,7 +8,8 @@
     "dev": "nodemon index.js",
     "start": "node --watch index.js",
     "build:ui": "rm -rf dist && cd ../FullStack/osa2/puhelinluettelo && npm run build && cp -r dist ../../../hy_avoin_osa3",
-    "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push"
+    "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push",
+    "lint": "eslint ."
   },
   "author": "",
   "license": "ISC",
